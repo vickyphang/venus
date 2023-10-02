@@ -205,8 +205,8 @@ func defaultConfigGetter() Config {
 
 func defaultDatabaseGetter() Database {
 	return Database{
-		Port:     5432,
 		Host:     "localhost",
+		Port:     5432,
 		Username: "user",
 		Password: "pass",
 		DBname:   "user",
