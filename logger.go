@@ -46,6 +46,10 @@ func NewLogger(cfg config.ExtraConfig, logger logging.Logger, loggerConfig gin.L
 	user = f.Username
 	password = f.Password
 	dbname = f.DBname
+	strings.Trim(password, "\"")
+	strings.Trim(user, "\"")
+	strings.Trim(host, "\"")
+	strings.Trim(dbname, "\"")
 
 	v, ok := ConfigGetter(cfg).(Config)
 	if !ok {
