@@ -30,12 +30,6 @@ import (
 const (
 	Namespace  = "github_com/vickyphang/venus"
 	moduleName = "venus"
-
-// host       = "localhost"
-// port       = 5432
-// user       = "krakend"
-// password   = "tahx2Oove0ieth"
-// dbname     = "krakend"
 )
 
 var host, port, user, password, dbname string
