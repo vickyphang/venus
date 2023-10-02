@@ -103,6 +103,16 @@ func (f Formatter) DefaultFormatter(params gin.LogFormatterParams) string {
 	var dbcred Database
 	getDatabase(&dbcred)
 
+	host := dbcred.Host
+	port := dbcred.Port
+	user := dbcred.Username
+	password := dbcred.Password
+	dbname := dbcred.DBname
+	strings.Trim(password, "\"")
+	strings.Trim(user, "\"")
+	strings.Trim(host, "\"")
+	strings.Trim(dbname, "\"")
+
 	loc, _ := time.LoadLocation("Asia/Jakarta")
 	timestamp := time.Now().In(loc)
 	client_token := ""
@@ -111,7 +121,7 @@ func (f Formatter) DefaultFormatter(params gin.LogFormatterParams) string {
 		*client_tokenAddr = strings.ReplaceAll(fmt.Sprint(header["Authorization"]), "Bearer ", "")
 	}
 
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable", dbcred.Host, dbcred.Port, dbcred.Username, dbcred.Password, dbcred.DBname)
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
