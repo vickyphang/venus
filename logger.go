@@ -15,16 +15,14 @@ import (
 
 	//	"log"
 	"io/ioutil"
-	//"os"
+	"os"
+
 	gologging "github.com/devopsfaith/krakend-gologging"
 	logstash "github.com/devopsfaith/krakend-logstash"
 	"github.com/gin-gonic/gin"
 	"github.com/luraproject/lura/config"
 	"github.com/luraproject/lura/logging"
-	//	logstash "github.com/krakendio/krakend-logstash/v2"
-	//	"github.com/krakendio/krakend-gologging/v2"
-	//	"github.com/luraproject/lura/v2/config"
-	//	"github.com/luraproject/lura/v2/logging"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -32,8 +30,8 @@ const (
 	moduleName = "venus"
 )
 
-var host, user, password, dbname string
-var port int64
+// var host, user, password, dbname string
+// var port int64
 
 func NewLogger(cfg config.ExtraConfig, logger logging.Logger, loggerConfig gin.LoggerConfig) gin.HandlerFunc {
 	v, ok := ConfigGetter(cfg).(Config)
@@ -41,11 +39,11 @@ func NewLogger(cfg config.ExtraConfig, logger logging.Logger, loggerConfig gin.L
 		return gin.LoggerWithConfig(loggerConfig)
 	}
 
-	host = v.Host
-	port = v.Port
-	user = v.Username
-	password = v.Password
-	dbname = v.DBname
+	// host = v.Host
+	// port = v.Port
+	// user = v.Username
+	// password = v.Password
+	// dbname = v.DBname
 	// strings.Trim(password, "\"")
 	// strings.Trim(user, "\"")
 	// strings.Trim(host, "\"")
@@ -102,6 +100,9 @@ func (f Formatter) DefaultFormatter(params gin.LogFormatterParams) string {
 	//		log.Fatal(err)
 	//	}
 
+	var dbcred Database
+	getDatabase(&dbcred)
+
 	loc, _ := time.LoadLocation("Asia/Jakarta")
 	timestamp := time.Now().In(loc)
 	client_token := ""
@@ -110,7 +111,7 @@ func (f Formatter) DefaultFormatter(params gin.LogFormatterParams) string {
 		*client_tokenAddr = strings.ReplaceAll(fmt.Sprint(header["Authorization"]), "Bearer ", "")
 	}
 
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable", dbcred.Host, dbcred.Port, dbcred.Username, dbcred.Password, dbcred.DBname)
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
@@ -138,6 +139,20 @@ func (f Formatter) DefaultFormatter(params gin.LogFormatterParams) string {
 	return ""
 }
 
+func getDatabase(dbcred *Database) {
+	f, err := os.Open("config.yml")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	decoder := yaml.NewDecoder(f)
+	err = decoder.Decode(&dbcred)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func ConfigGetter(e config.ExtraConfig) interface{} {
 	v, ok := e[Namespace]
 	if !ok {
@@ -161,18 +176,6 @@ func ConfigGetter(e config.ExtraConfig) interface{} {
 	if v, ok = e[gologging.Namespace]; ok {
 		_, cfg.Logstash = e[logstash.Namespace]
 	}
-
-	host, _ := tmp["host"].(string)
-	port, _ := tmp["port"].(int64)
-	user, _ := tmp["user"].(string)
-	pass, _ := tmp["password"].(string)
-	dbname, _ := tmp["dbname"].(string)
-
-	cfg.Host = host
-	cfg.Port = port
-	cfg.Username = user
-	cfg.Password = pass
-	cfg.DBname = dbname
 
 	return cfg
 }
@@ -223,11 +226,14 @@ func defaultConfigGetter() Config {
 type Config struct {
 	SkipPaths []string
 	Logstash  bool
-	Host      string
-	Port      int64
-	Username  string
-	Password  string
-	DBname    string
+}
+
+type Database struct {
+	Host     string `yaml:"host"`
+	Port     int64  `yaml:"port"`
+	Username string `yaml:"user"`
+	Password string `yaml:"password"`
+	DBname   string `yaml:"dbname"`
 }
 
 // type Database struct {
