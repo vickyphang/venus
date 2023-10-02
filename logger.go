@@ -32,7 +32,8 @@ const (
 	moduleName = "venus"
 )
 
-var host, port, user, password, dbname string
+var host, user, password, dbname string
+var port int64
 
 func NewLogger(cfg config.ExtraConfig, logger logging.Logger, loggerConfig gin.LoggerConfig) gin.HandlerFunc {
 
@@ -200,7 +201,7 @@ func defaultConfigGetter() Config {
 
 func defaultDatabaseGetter() Database {
 	return Database{
-		Port:     "5432",
+		Port:     5432,
 		Host:     "localhost",
 		Username: "user",
 		Password: "pass",
@@ -214,7 +215,7 @@ type Config struct {
 }
 
 type Database struct {
-	Port     string
+	Port     int64
 	Host     string
 	Username string
 	Password string
