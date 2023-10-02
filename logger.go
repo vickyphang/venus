@@ -36,25 +36,20 @@ var host, user, password, dbname string
 var port int64
 
 func NewLogger(cfg config.ExtraConfig, logger logging.Logger, loggerConfig gin.LoggerConfig) gin.HandlerFunc {
-
-	f, ok := DatabaseGetter(cfg).(Database)
-	if !ok {
-		panic(ok)
-	}
-	host = f.Host
-	port = f.Port
-	user = f.Username
-	password = f.Password
-	dbname = f.DBname
-	strings.Trim(password, "\"")
-	strings.Trim(user, "\"")
-	strings.Trim(host, "\"")
-	strings.Trim(dbname, "\"")
-
 	v, ok := ConfigGetter(cfg).(Config)
 	if !ok {
 		return gin.LoggerWithConfig(loggerConfig)
 	}
+
+	host = v.Host
+	port = v.Port
+	user = v.Username
+	password = v.Password
+	dbname = v.DBname
+	// strings.Trim(password, "\"")
+	// strings.Trim(user, "\"")
+	// strings.Trim(host, "\"")
+	// strings.Trim(dbname, "\"")
 
 	loggerConfig.SkipPaths = v.SkipPaths
 	logger.Info(fmt.Sprintf("%s: total skip paths set: %d", moduleName, len(v.SkipPaths)))
@@ -167,34 +162,46 @@ func ConfigGetter(e config.ExtraConfig) interface{} {
 		_, cfg.Logstash = e[logstash.Namespace]
 	}
 
-	return cfg
-}
-
-func DatabaseGetter(e config.ExtraConfig) interface{} {
-	v, ok := e[Namespace]
-	if !ok {
-		return nil
-	}
-	tmp, ok := v.(map[string]interface{})
-	if !ok {
-		return nil
-	}
-
-	database := defaultDatabaseGetter()
 	host, _ := tmp["host"].(string)
-	port, _ := tmp["port"].(string)
+	port, _ := tmp["port"].(int64)
 	user, _ := tmp["user"].(string)
 	pass, _ := tmp["password"].(string)
 	dbname, _ := tmp["dbname"].(string)
 
-	database.Host = host
-	database.Host = port
-	database.Username = user
-	database.Password = pass
-	database.DBname = dbname
+	cfg.Host = host
+	cfg.Port = port
+	cfg.Username = user
+	cfg.Password = pass
+	cfg.DBname = dbname
 
-	return database
+	return cfg
 }
+
+// func DatabaseGetter(e config.ExtraConfig) interface{} {
+// 	v, ok := e[Namespace]
+// 	if !ok {
+// 		return nil
+// 	}
+// 	tmp, ok := v.(map[string]interface{})
+// 	if !ok {
+// 		return nil
+// 	}
+
+// 	database := defaultDatabaseGetter()
+// 	host, _ := tmp["host"].(string)
+// 	port, _ := tmp["port"].(string)
+// 	user, _ := tmp["user"].(string)
+// 	pass, _ := tmp["password"].(string)
+// 	dbname, _ := tmp["dbname"].(string)
+
+// 	database.Host = host
+// 	database.Host = port
+// 	database.Username = user
+// 	database.Password = pass
+// 	database.DBname = dbname
+
+// 	return database
+// }
 
 func defaultConfigGetter() Config {
 	return Config{
@@ -203,25 +210,30 @@ func defaultConfigGetter() Config {
 	}
 }
 
-func defaultDatabaseGetter() Database {
-	return Database{
-		Host:     "localhost",
-		Port:     5432,
-		Username: "user",
-		Password: "pass",
-		DBname:   "user",
-	}
-}
+// func defaultDatabaseGetter() Database {
+// 	return Database{
+// 		Host:     "localhost",
+// 		Port:     5432,
+// 		Username: "user",
+// 		Password: "pass",
+// 		DBname:   "user",
+// 	}
+// }
 
 type Config struct {
 	SkipPaths []string
 	Logstash  bool
+	Host      string
+	Port      int64
+	Username  string
+	Password  string
+	DBname    string
 }
 
-type Database struct {
-	Port     int64
-	Host     string
-	Username string
-	Password string
-	DBname   string
-}
+// type Database struct {
+// 	Port     int64
+// 	Host     string
+// 	Username string
+// 	Password string
+// 	DBname   string
+// }
