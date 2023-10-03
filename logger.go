@@ -34,7 +34,6 @@ const (
 // host       = "localhost"
 // port       = 5432
 // user       = "krakend"
-// password   = "tahx2Oove0ieth"
 // dbname     = "krakend"
 )
 
