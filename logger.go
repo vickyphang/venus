@@ -15,23 +15,31 @@ import (
 
 	//	"log"
 	"io/ioutil"
-	"os"
-
+	//	"os"
 	gologging "github.com/devopsfaith/krakend-gologging"
 	logstash "github.com/devopsfaith/krakend-logstash"
 	"github.com/gin-gonic/gin"
 	"github.com/luraproject/lura/config"
 	"github.com/luraproject/lura/logging"
-	"gopkg.in/yaml.v2"
+	//	logstash "github.com/krakendio/krakend-logstash/v2"
+	//	"github.com/krakendio/krakend-gologging/v2"
+	//	"github.com/luraproject/lura/v2/config"
+	//	"github.com/luraproject/lura/v2/logging"
 )
 
 const (
 	Namespace  = "github_com/vickyphang/venus"
 	moduleName = "venus"
+
+// host       = "localhost"
+// port       = 5432
+// user       = "krakend"
+// password   = "tahx2Oove0ieth"
+// dbname     = "krakend"
 )
 
-// var host, user, password, dbname string
-// var port int64
+var host, user, password, dbname string
+var port int
 
 func NewLogger(cfg config.ExtraConfig, logger logging.Logger, loggerConfig gin.LoggerConfig) gin.HandlerFunc {
 	v, ok := ConfigGetter(cfg).(Config)
@@ -39,15 +47,11 @@ func NewLogger(cfg config.ExtraConfig, logger logging.Logger, loggerConfig gin.L
 		return gin.LoggerWithConfig(loggerConfig)
 	}
 
-	// host = v.Host
-	// port = v.Port
-	// user = v.Username
-	// password = v.Password
-	// dbname = v.DBname
-	// strings.Trim(password, "\"")
-	// strings.Trim(user, "\"")
-	// strings.Trim(host, "\"")
-	// strings.Trim(dbname, "\"")
+	host = v.Host
+	port = v.Port
+	user = v.User
+	password = v.Pass
+	dbname = v.DBname
 
 	loggerConfig.SkipPaths = v.SkipPaths
 	logger.Info(fmt.Sprintf("%s: total skip paths set: %d", moduleName, len(v.SkipPaths)))
@@ -68,6 +72,8 @@ func (f Formatter) DefaultFormatter(params gin.LogFormatterParams) string {
 	method := params.Method
 	path := params.Path
 	status := params.StatusCode
+
+	fmt.Println(host)
 
 	//	reqBody, _ := io.ioutil.ReadAll(body)
 	//	reqHeader, _ := io.ioutil.ReadAll(header)
@@ -100,19 +106,6 @@ func (f Formatter) DefaultFormatter(params gin.LogFormatterParams) string {
 	//		log.Fatal(err)
 	//	}
 
-	var dbcred Database
-	getDatabase(&dbcred)
-
-	host := dbcred.Host
-	port := dbcred.Port
-	user := dbcred.Username
-	password := dbcred.Password
-	dbname := dbcred.DBname
-	strings.Trim(password, "\"")
-	strings.Trim(user, "\"")
-	strings.Trim(host, "\"")
-	strings.Trim(dbname, "\"")
-
 	loc, _ := time.LoadLocation("Asia/Jakarta")
 	timestamp := time.Now().In(loc)
 	client_token := ""
@@ -122,6 +115,7 @@ func (f Formatter) DefaultFormatter(params gin.LogFormatterParams) string {
 	}
 
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
@@ -149,20 +143,6 @@ func (f Formatter) DefaultFormatter(params gin.LogFormatterParams) string {
 	return ""
 }
 
-func getDatabase(dbcred *Database) {
-	f, err := os.Open("config.yml")
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-
-	decoder := yaml.NewDecoder(f)
-	err = decoder.Decode(&dbcred)
-	if err != nil {
-		panic(err)
-	}
-}
-
 func ConfigGetter(e config.ExtraConfig) interface{} {
 	v, ok := e[Namespace]
 	if !ok {
@@ -173,7 +153,7 @@ func ConfigGetter(e config.ExtraConfig) interface{} {
 		return nil
 	}
 
-	cfg := defaultConfigGetter()
+	cfg := Config{}
 	if skipPaths, ok := tmp["skip_paths"].([]interface{}); ok {
 		var paths []string
 		for _, skipPath := range skipPaths {
@@ -183,73 +163,48 @@ func ConfigGetter(e config.ExtraConfig) interface{} {
 		}
 		cfg.SkipPaths = paths
 	}
+	cfg.Logstash = false
 	if v, ok = e[gologging.Namespace]; ok {
 		_, cfg.Logstash = e[logstash.Namespace]
+	}
+
+	if v, ok := tmp["host"].(string); ok {
+		cfg.Host = v
+	}
+	if v, ok := tmp["port"].(int); ok {
+		cfg.Port = v
+	}
+	if v, ok := tmp["user"].(string); ok {
+		cfg.User = v
+	}
+	if v, ok := tmp["pass"].(string); ok {
+		cfg.Pass = v
+	}
+	if v, ok := tmp["dbname"].(string); ok {
+		cfg.DBname = v
 	}
 
 	return cfg
 }
 
-// func DatabaseGetter(e config.ExtraConfig) interface{} {
-// 	v, ok := e[Namespace]
-// 	if !ok {
-// 		return nil
-// 	}
-// 	tmp, ok := v.(map[string]interface{})
-// 	if !ok {
-// 		return nil
-// 	}
-
-// 	database := defaultDatabaseGetter()
-// 	host, _ := tmp["host"].(string)
-// 	port, _ := tmp["port"].(string)
-// 	user, _ := tmp["user"].(string)
-// 	pass, _ := tmp["password"].(string)
-// 	dbname, _ := tmp["dbname"].(string)
-
-// 	database.Host = host
-// 	database.Host = port
-// 	database.Username = user
-// 	database.Password = pass
-// 	database.DBname = dbname
-
-// 	return database
-// }
-
-func defaultConfigGetter() Config {
-	return Config{
-		SkipPaths: []string{},
-		Logstash:  false,
-	}
-}
-
-// func defaultDatabaseGetter() Database {
-// 	return Database{
-// 		Host:     "localhost",
-// 		Port:     5432,
-// 		Username: "user",
-// 		Password: "pass",
-// 		DBname:   "user",
+// func defaultConfigGetter() Config {
+// 	return Config{
+// 		SkipPaths: []string{},
+// 		Logstash:  false,
+// 		Host      string
+// 		Port      string
+// 		User      string
+// 		Pass      string
+// 		DBname    string
 // 	}
 // }
 
 type Config struct {
 	SkipPaths []string
 	Logstash  bool
+	Host      string
+	Port      int
+	User      string
+	Pass      string
+	DBname    string
 }
-
-type Database struct {
-	Host     string `yaml:"host"`
-	Port     int64  `yaml:"port"`
-	Username string `yaml:"user"`
-	Password string `yaml:"password"`
-	DBname   string `yaml:"dbname"`
-}
-
-// type Database struct {
-// 	Port     int64
-// 	Host     string
-// 	Username string
-// 	Password string
-// 	DBname   string
-// }
