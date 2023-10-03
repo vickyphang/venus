@@ -171,7 +171,7 @@ func ConfigGetter(e config.ExtraConfig) interface{} {
 		cfg.Host = v
 	}
 	if v, ok := tmp["port"]; ok {
-		cfg.Port = v.(int)
+		cfg.Port = int(v.(float64))
 	}
 	if v, ok := tmp["user"].(string); ok {
 		cfg.User = v
