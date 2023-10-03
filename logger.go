@@ -72,7 +72,7 @@ func (f Formatter) DefaultFormatter(params gin.LogFormatterParams) string {
 	path := params.Path
 	status := params.StatusCode
 
-	fmt.Println(host)
+	fmt.Println(host, port, user, password, dbname)
 
 	//	reqBody, _ := io.ioutil.ReadAll(body)
 	//	reqHeader, _ := io.ioutil.ReadAll(header)
@@ -170,8 +170,8 @@ func ConfigGetter(e config.ExtraConfig) interface{} {
 	if v, ok := tmp["host"].(string); ok {
 		cfg.Host = v
 	}
-	if v, ok := tmp["port"].(int); ok {
-		cfg.Port = v
+	if v, ok := tmp["port"]; ok {
+		cfg.Port = v.(int)
 	}
 	if v, ok := tmp["user"].(string); ok {
 		cfg.User = v
