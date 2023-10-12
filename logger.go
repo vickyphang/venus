@@ -1,40 +1,24 @@
-// Copyright 2021 Faisal Alam. All rights reserved.
-// Use of this source code is governed by a Apache style
-// license that can be found in the LICENSE file.
-
 package gin_logger
 
 import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"time"
 
-	_ "github.com/lib/pq"
-
-	//	"log"
-	"io/ioutil"
-	//	"os"
 	gologging "github.com/devopsfaith/krakend-gologging"
 	logstash "github.com/devopsfaith/krakend-logstash"
 	"github.com/gin-gonic/gin"
+	_ "github.com/lib/pq"
 	"github.com/luraproject/lura/config"
 	"github.com/luraproject/lura/logging"
-	//	logstash "github.com/krakendio/krakend-logstash/v2"
-	//	"github.com/krakendio/krakend-gologging/v2"
-	//	"github.com/luraproject/lura/v2/config"
-	//	"github.com/luraproject/lura/v2/logging"
 )
 
 const (
 	Namespace  = "github_com/vickyphang/venus"
 	moduleName = "venus"
-
-// host       = "localhost"
-// port       = 5432
-// user       = "krakend"
-// dbname     = "krakend"
 )
 
 var host, user, password, dbname string
@@ -72,10 +56,9 @@ func (f Formatter) DefaultFormatter(params gin.LogFormatterParams) string {
 	path := params.Path
 	status := params.StatusCode
 
-	fmt.Println(host, port, user, password, dbname)
+	// For testing purpose
+	//fmt.Println(host, port, user, password, dbname)
 
-	//	reqBody, _ := io.ioutil.ReadAll(body)
-	//	reqHeader, _ := io.ioutil.ReadAll(header)
 	record := map[string]interface{}{
 		"method":             method,
 		"host":               params.Request.Host,
@@ -92,18 +75,6 @@ func (f Formatter) DefaultFormatter(params gin.LogFormatterParams) string {
 	payload := map[string]interface{}{
 		"data": record,
 	}
-
-	//	a, _ := json.Marshal(payload)
-	//	file, err := os.OpenFile("/home/ubuntu/gin.log", os.O_CREATE|os.O_WRONLY, 0644)
-	// 	if err != nil {
-	//		log.Fatal(err)
-	//	}
-	//	defer file.Close()
-	//	_, err = file.WriteString(string(a))
-	//
-	//	if err != nil {
-	//		log.Fatal(err)
-	//	}
 
 	loc, _ := time.LoadLocation("Asia/Jakarta")
 	timestamp := time.Now().In(loc)
@@ -125,12 +96,6 @@ func (f Formatter) DefaultFormatter(params gin.LogFormatterParams) string {
 	if err != nil {
 		panic(err)
 	}
-	//	id := 0
-	//	sqlStatement := `INSERT INTO items (data) VALUES ($1)`
-	//	err = db.QueryRow(sqlStatement, string(a)).Scan(&id)
-	//	if err != nil {
-	//		panic(err)
-	//	}
 
 	if f.config.Logstash {
 		f.logger.Info("", payload)
@@ -185,18 +150,6 @@ func ConfigGetter(e config.ExtraConfig) interface{} {
 
 	return cfg
 }
-
-// func defaultConfigGetter() Config {
-// 	return Config{
-// 		SkipPaths: []string{},
-// 		Logstash:  false,
-// 		Host      string
-// 		Port      string
-// 		User      string
-// 		Pass      string
-// 		DBname    string
-// 	}
-// }
 
 type Config struct {
 	SkipPaths []string
