@@ -92,7 +92,7 @@ func (f Formatter) DefaultFormatter(params gin.LogFormatterParams) string {
 	}
 	defer db.Close()
 	data, _ := json.Marshal(payload)
-	_, err = db.Exec("INSERT INTO krakend (timestamp, client_id, method, status, path, details) VALUES($1, $2, $3, $4, $5, $6)", timestamp, client_token, method, status, path, data)
+	_, err = db.Exec("INSERT INTO $1 (timestamp, client_id, method, status, path, details) VALUES($2, $3, $4, $5, $6, $7)", dbname, timestamp, client_token, method, status, path, data)
 	if err != nil {
 		panic(err)
 	}
